@@ -167,18 +167,7 @@ char* read_inventory_file_version_from_file(void) {
     return version_copy;
 }
 
-bool copy_json_file(const char* src, const char* dst)
-{
-    std::ifstream in(src, std::ios::binary);
-    if (!in) return false;
-
-    std::ofstream out(dst, std::ios::binary);
-    if (!out) return false;
-
-    out << in.rdbuf();
-    return true;
-}
-
+// Changed here
 
 // cppcheck-suppress functionConst
 int update_inventory_file(ua_callback_ctl_t* ctl) {
