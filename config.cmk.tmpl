@@ -1,0 +1,36 @@
+
+# set to true to produce debug build
+# no optimization, and -g compiler flags
+#set(DEBUG TRUE)
+
+# REMOTE_BROKER true for enabling 'do transfer file' callback on template binary, REMOTE_BROKER false for disable the 'do transfer file' callback.
+set(REMOTE_BROKER TRUE)
+#set to true to build with legacy API protoypes.
+#default build is for API Version 2.0
+set(USE_LEGACY_API false)
+
+set(UA_BIN tcu-updateagent)
+set(ESYNC_ALLIANCE false)
+
+set(CMAKE_C_FLAGS "-Wno-format-truncation -Wno-cpp -Wno-implicit-function-declaration -Wno-format-security")
+include_directories($ENV{QL_SDK_DIR}/Harman/common/include/)
+include_directories($ENV{QL_SDK_DIR}/Harman/harman_managers/dm_manager/common_api/generated/proxy/)
+include_directories($ENV{QL_SDK_DIR}/Harman/harman_managers/dm_manager/common_api/generated/common/)
+
+#modify below path as per generated files location in SDK
+include_directories($ENV{QL_SDK_DIR}/Harman/harman_test_apps/test_services/sdm_service/common_api/generated/common/)
+include_directories($ENV{QL_SDK_DIR}/Harman/harman_test_apps/test_services/sdm_service/common_api/generated/proxy/)
+
+#Add src-gen path for SDM support
+set(SRC_GEN $ENV{QL_SDK_DIR}/../../tata_tcu_ua/sdm/src-gen)
+set(SRC_GEN_CONT $ENV{QL_SDK_DIR}/../../tata_tcu_ua/cont/src-gen)
+set(SRC_GEN_COTA $ENV{QL_SDK_DIR}/../../tata_tcu_ua/cota/src-gen)
+set(SRC_GEN_SM $ENV{QL_SDK_DIR}/../../tata_tcu_ua/sm/src-gen)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Add library paths
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--no-whole-archive")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--no-whole-archive")
+
+# Enable verbose output during build
+set(CMAKE_VERBOSE_MAKEFILE ON)
