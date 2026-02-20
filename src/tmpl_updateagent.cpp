@@ -167,7 +167,63 @@ char* read_inventory_file_version_from_file(void) {
     return version_copy;
 }
 
-// Changed here
+// Function to sync inventory from /oemapp/esync/ecu_config to /emmc/misc/data/ecu_config
+// Changed for NIS-774 - By Rohit
+void sync_inventory_on_boot(ua_callback_ctl_t* ctl)
+{
+    const char *oem_path  = "/oemapp/esync/ecu_config/inventory.json";
+    const char *data_path = "/emmc/misc/data/ecu_config/inventory.json";
+
+    directory_exists("/emmc/misc/data/ecu_config");
+
+    if (persistent_file_exist(oem_path) != XL4_SUCCESS)
+    {
+        A_INFO_MSG("OEM inventory missing, skipping sync\n");
+        return;
+    }
+
+    if (persistent_file_exist(data_path) != XL4_SUCCESS)
+    {
+        A_INFO_MSG("Data inventory missing, copying OEM version\n");
+        copy_file(oem_path, data_path);
+        send_uds_inventory_reset();
+        return;
+    }
+
+    inventory_file_location = (char*)oem_path;
+    char* oem_ver = read_inventory_file_version_from_file();
+
+    inventory_file_location = (char*)data_path;
+    char* data_ver = read_inventory_file_version_from_file();
+
+    if (!oem_ver || !data_ver)
+    {
+        A_INFO_MSG("Inventory version read failed, replacing with OEM\n");
+        copy_file(oem_path, data_path);
+        send_uds_inventory_reset();
+        return;
+    }
+
+    if (strcmp(oem_ver, data_ver) > 0)
+    {
+        A_INFO_MSG("OEM inventory newer (%s > %s). Updating.\n", oem_ver, data_ver);
+
+        snprintf(g_cache_location, PATH_MAX, "%s", "/oemapp/esync/ecu_config");
+
+        if (update_inventory_file(ctl) == E_UA_OK)
+        {
+            send_uds_inventory_reset();
+        }
+    }
+    else
+    {
+        A_INFO_MSG("Inventory already up-to-date (%s)\n", data_ver);
+    }
+
+    free(oem_ver);
+    free(data_ver);
+}
+
 
 // cppcheck-suppress functionConst
 int update_inventory_file(ua_callback_ctl_t* ctl) {
