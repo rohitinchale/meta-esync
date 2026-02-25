@@ -169,21 +169,39 @@ char* read_inventory_file_version_from_file(void) {
 
 // Function to sync inventory from /oemapp/esync/ecu_config to /emmc/misc/data/ecu_config
 // Changed for NIS-774 - By Rohit
-static void sync_inventory_on_boot(void)
+
+static int compare_versions(const char *a, const char *b)
+{
+    while (*a || *b)
+    {
+        long va = strtol(a, (char**)&a, 10);
+        long vb = strtol(b, (char**)&b, 10);
+
+        if (va > vb) return 1;
+        if (va < vb) return -1;
+
+        if (*a == '.') a++;
+        if (*b == '.') b++;
+    }
+    return 0;
+}
+
+static int sync_inventory_on_boot(void)
 {
     char oem_path[PATH_MAX] = {0};
 	snprintf(oem_path, sizeof(oem_path), "%s/ecu_config/inventory.json", "/oemapp/esync");
 
     char *data_path = inventory_file_location;
 
-    char *old_loc = inventory_file_location;
-
-    directory_exists("/emmc/misc/data/ecu_config");
+    if(directory_exists("/emmc/misc/data/ecu_config") != 0) {
+		A_INFO_MSG("Data directory missing\n");
+        return -1;
+	}
 
     if (persistent_file_exist(oem_path) != XL4_SUCCESS)
     {
         A_INFO_MSG("OEM inventory missing, skipping sync\n");
-        return;
+        return -1;
     }
 
     if (persistent_file_exist(data_path) != XL4_SUCCESS)
@@ -192,10 +210,10 @@ static void sync_inventory_on_boot(void)
 
         if (copy_file(oem_path, data_path) == 0)
             send_uds_inventory_reset();
-        else
-            A_INFO_MSG("Copy failed\n");
-
-        return;
+        else {
+			A_INFO_MSG("Copy failed\n");
+			return -1;
+		}
     }
 
     inventory_file_location = (char*)oem_path;
@@ -204,7 +222,7 @@ static void sync_inventory_on_boot(void)
     inventory_file_location = (char*)data_path;
     char* data_ver = read_inventory_file_version_from_file();
 
-    inventory_file_location = old_loc; 
+    inventory_file_location = data_path; 
 
     if (!oem_ver || !data_ver)
     {
@@ -212,30 +230,42 @@ static void sync_inventory_on_boot(void)
 
         if (copy_file(oem_path, data_path) == 0)
             send_uds_inventory_reset();
-        else
-            A_INFO_MSG("Copy failed\n");
+        else {
+			A_INFO_MSG("Copy failed\n");
+			if(oem_ver) free(oem_ver);
+			if(data_ver) free(data_ver);
+			return -1;
+		}
+            
+        if(oem_ver) free(oem_ver);
+		if(data_ver) free(data_ver);
 
-        free(oem_ver);
-        free(data_ver);
-        return;
+		return 0;
     }
 
-    if (strcmp(oem_ver, data_ver) > 0)
+    if (compare_versions(oem_ver, data_ver) > 0)
     {
         A_INFO_MSG("OEM inventory newer (%s > %s). Updating.\n", oem_ver, data_ver);
 
         if (copy_file(oem_path, data_path) == 0)
             send_uds_inventory_reset();
-        else
-            A_INFO_MSG("Copy failed\n");
+        else {
+			A_INFO_MSG("Copy failed\n");
+			if(oem_ver) free(oem_ver);
+			if(data_ver) free(data_ver);
+			return -1;
+		}
+
+		if(oem_ver) free(oem_ver);
+		if(data_ver) free(data_ver);
     }
     else
     {
         A_INFO_MSG("Inventory already up-to-date (%s)\n", data_ver);
+		if(oem_ver) free(oem_ver);
+		if(data_ver) free(data_ver);
     }
-
-    free(oem_ver);
-    free(data_ver);
+	return 0;
 }
 
 
