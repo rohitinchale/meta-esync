@@ -169,10 +169,14 @@ char* read_inventory_file_version_from_file(void) {
 
 // Function to sync inventory from /oemapp/esync/ecu_config to /emmc/misc/data/ecu_config
 // Changed for NIS-774 - By Rohit
-void sync_inventory_on_boot(ua_callback_ctl_t* ctl)
+static void sync_inventory_on_boot(void)
 {
-    const char *oem_path  = "/oemapp/esync/ecu_config/inventory.json";
-    const char *data_path = "/emmc/misc/data/ecu_config/inventory.json";
+    char oem_path[PATH_MAX] = {0};
+	snprintf(oem_path, sizeof(oem_path), "%s/ecu_config/inventory.json", "/oemapp/esync");
+
+    char *data_path = inventory_file_location;
+
+    char *old_loc = inventory_file_location;
 
     directory_exists("/emmc/misc/data/ecu_config");
 
@@ -185,8 +189,12 @@ void sync_inventory_on_boot(ua_callback_ctl_t* ctl)
     if (persistent_file_exist(data_path) != XL4_SUCCESS)
     {
         A_INFO_MSG("Data inventory missing, copying OEM version\n");
-        copy_file(oem_path, data_path);
-        send_uds_inventory_reset();
+
+        if (copy_file(oem_path, data_path) == 0)
+            send_uds_inventory_reset();
+        else
+            A_INFO_MSG("Copy failed\n");
+
         return;
     }
 
@@ -196,11 +204,19 @@ void sync_inventory_on_boot(ua_callback_ctl_t* ctl)
     inventory_file_location = (char*)data_path;
     char* data_ver = read_inventory_file_version_from_file();
 
+    inventory_file_location = old_loc; 
+
     if (!oem_ver || !data_ver)
     {
         A_INFO_MSG("Inventory version read failed, replacing with OEM\n");
-        copy_file(oem_path, data_path);
-        send_uds_inventory_reset();
+
+        if (copy_file(oem_path, data_path) == 0)
+            send_uds_inventory_reset();
+        else
+            A_INFO_MSG("Copy failed\n");
+
+        free(oem_ver);
+        free(data_ver);
         return;
     }
 
@@ -208,12 +224,10 @@ void sync_inventory_on_boot(ua_callback_ctl_t* ctl)
     {
         A_INFO_MSG("OEM inventory newer (%s > %s). Updating.\n", oem_ver, data_ver);
 
-        snprintf(g_cache_location, PATH_MAX, "%s", "/oemapp/esync/ecu_config");
-
-        if (update_inventory_file(ctl) == E_UA_OK)
-        {
+        if (copy_file(oem_path, data_path) == 0)
             send_uds_inventory_reset();
-        }
+        else
+            A_INFO_MSG("Copy failed\n");
     }
     else
     {
@@ -2209,6 +2223,8 @@ tcu_handle_t* tcu_ua_agent_init(ua_handler_t* uah, ua_cfg_t cfg, int l, const ch
     snprintf(gDownloadPath, sizeof(gDownloadPath),"%s/container_update/",cache_location);
 	snprintf(cota_file_location, (PATH_MAX-1),"%s/cms_config/",cache_location);
 	snprintf(inventory_file_location, (PATH_MAX-1), "%s/ecu_config/inventory.json", cache_location);
+
+	sync_inventory_on_boot();
 
 	if(directory_exists(flash_directory) == 0) {
 		A_INFO_MSG("Flash directory is present\n");
