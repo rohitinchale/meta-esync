@@ -216,13 +216,15 @@ static int sync_inventory_on_boot(void)
 		}
     }
 
-    inventory_file_location = (char*)oem_path;
-    char* oem_ver = read_inventory_file_version_from_file();
+    strncpy(inventory_file_location, oem_path, PATH_MAX - 1);
+	inventory_file_location[PATH_MAX - 1] = '\0';
+	char* oem_ver = read_inventory_file_version_from_file();
 
-    inventory_file_location = (char*)data_path;
-    char* data_ver = read_inventory_file_version_from_file();
+	strncpy(inventory_file_location, data_path, PATH_MAX - 1);
+	inventory_file_location[PATH_MAX - 1] = '\0';
+	char* data_ver = read_inventory_file_version_from_file();
 
-    inventory_file_location = data_path; 
+    strncpy(inventory_file_location, data_path, PATH_MAX - 1);
 
     if (!oem_ver || !data_ver)
     {
