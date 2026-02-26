@@ -858,7 +858,19 @@ static install_state_t do_tcu_install(ua_callback_ctl_t* ctl)
 			A_INFO_MSG("TML : Fota state is %s hence switching partition\n",tcu_GetFOTAState());
 			store_package_info(SWITCH_FILE, ctl->pkg_name, "");
 			sleep(2);
-			tcu_SwitchPartition();
+
+			char switch_buffer[60];
+			tcu_SwitchPartition(switch_buffer, sizeof(switch_buffer));
+			if (strcmp(switch_buffer, "E_NO_ERROR") != 0) {
+				A_INFO_MSG("TML : Switch Partition failed to start: %s\n", switch_buffer);
+				char switch_failure[128];
+				snprintf(switch_failure, sizeof(switch_failure),
+						"Switch partition failed to start. Error: %s",
+						switch_buffer);
+				sent_ua_custom_message(ctl->pkg_name, switch_failure);
+				remove_cache_dir(ctl);
+				return INSTALL_FAILED;
+			}
 			sleep(60);
 		}
 
@@ -1311,7 +1323,18 @@ static install_state_t do_tcu_install(ua_callback_ctl_t* ctl)
 					}
 				}
 					A_INFO_MSG("TML : calling tcu_SwitchPartition\n");
-					tcu_SwitchPartition();
+					char switch_buffer[60];
+					tcu_SwitchPartition(switch_buffer, sizeof(switch_buffer));
+					if (strcmp(switch_buffer, "E_NO_ERROR") != 0) {
+						A_INFO_MSG("TML : Switch Partition failed to start: %s\n", switch_buffer);
+						char switch_failure[128];
+						snprintf(switch_failure, sizeof(switch_failure),
+								"Switch partition failed to start. Error: %s",
+								switch_buffer);
+						sent_ua_custom_message(ctl->pkg_name, switch_failure);
+						remove_cache_dir(ctl);
+						return INSTALL_FAILED;
+					}
 					sleep(60);
 			} else {
 					char *delta_zip = "tcu-ua unable to find DeltaPackage.zip";
@@ -1804,7 +1827,18 @@ int do_resume_from_reboot(ua_callback_ctl_t* ctl) {
 				ua_send_message_string(ioc_update_fail);
 				json_object_put(jObject);
 				err = E_UA_ERR;
-				tcu_SwitchPartition();
+				char switch_buffer[60];
+				tcu_SwitchPartition(switch_buffer, sizeof(switch_buffer));
+				if (strcmp(switch_buffer, "E_NO_ERROR") != 0) {
+					A_INFO_MSG("TML : Switch Partition failed to start: %s\n", switch_buffer);
+					char switch_failure[128];
+					snprintf(switch_failure, sizeof(switch_failure),
+							"Switch partition failed to start. Error: %s",
+							switch_buffer);
+					sent_ua_custom_message(ctl->pkg_name, switch_failure);
+					remove_cache_dir(ctl);
+					return INSTALL_FAILED;
+				}
 				sleep(60);
 			}
 
@@ -1816,7 +1850,18 @@ int do_resume_from_reboot(ua_callback_ctl_t* ctl) {
 				A_INFO_MSG("TML :  %s %s \n", SWITCH_FILE, REC_FILE);
 				unlink(SWITCH_FILE);
 				unlink(REC_FILE);
-				tcu_SwitchPartition();
+				char switch_buffer[60];
+				tcu_SwitchPartition(switch_buffer, sizeof(switch_buffer));
+				if (strcmp(switch_buffer, "E_NO_ERROR") != 0) {
+					A_INFO_MSG("TML : Switch Partition failed to start: %s\n", switch_buffer);
+					char switch_failure[128];
+					snprintf(switch_failure, sizeof(switch_failure),
+							"Switch partition failed to start. Error: %s",
+							switch_buffer);
+					sent_ua_custom_message(ctl->pkg_name, switch_failure);
+					remove_cache_dir(ctl);
+					return INSTALL_FAILED;
+				}
 				sleep(60);
 		}
 
@@ -1840,7 +1885,18 @@ int do_resume_from_reboot(ua_callback_ctl_t* ctl) {
 			A_INFO_MSG("TML : Received NULL installed version\n");
 			json_object_put(jObject);
 			err = E_UA_ERR;
-			tcu_SwitchPartition();
+			char switch_buffer[60];
+			tcu_SwitchPartition(switch_buffer, sizeof(switch_buffer));
+			if (strcmp(switch_buffer, "E_NO_ERROR") != 0) {
+				A_INFO_MSG("TML : Switch Partition failed to start: %s\n", switch_buffer);
+				char switch_failure[128];
+				snprintf(switch_failure, sizeof(switch_failure),
+						"Switch partition failed to start. Error: %s",
+						switch_buffer);
+				sent_ua_custom_message(ctl->pkg_name, switch_failure);
+				remove_cache_dir(ctl);
+				return INSTALL_FAILED;
+			}
 			sleep(60);
 		}
 
@@ -1948,7 +2004,18 @@ int do_resume_from_reboot(ua_callback_ctl_t* ctl) {
 
 			json_object_put(jObject);
 			err = E_UA_ERR;
-			tcu_SwitchPartition();
+			char switch_buffer[60];
+			tcu_SwitchPartition(switch_buffer, sizeof(switch_buffer));
+			if (strcmp(switch_buffer, "E_NO_ERROR") != 0) {
+				A_INFO_MSG("TML : Switch Partition failed to start: %s\n", switch_buffer);
+				char switch_failure[128];
+				snprintf(switch_failure, sizeof(switch_failure),
+						"Switch partition failed to start. Error: %s",
+						switch_buffer);
+				sent_ua_custom_message(ctl->pkg_name, switch_failure);
+				remove_cache_dir(ctl);
+				return INSTALL_FAILED;
+			}
 			sleep(60);
 		}
 		sent_ua_custom_message(ctl->pkg_name,custom_err_msg);

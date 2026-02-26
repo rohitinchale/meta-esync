@@ -35,7 +35,7 @@ int tcu_StartFotaUpdate(const char* flash_directory, const char* pkg_name, const
 
 int tcu_GetCurrentActivePartition();
 
-int tcu_SwitchPartition();
+int tcu_SwitchPartition(char *buffer, size_t bufferSize);
 
 int tcu_SynchronizePartition(char *buffer, size_t bufferSize);
 

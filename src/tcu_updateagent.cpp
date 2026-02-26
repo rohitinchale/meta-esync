@@ -648,12 +648,13 @@ int tcu_GetCurrentActivePartition()
 	return 0;
 }
 
-int tcu_SwitchPartition()
+int tcu_SwitchPartition(char *buffer, size_t bufferSize)
 {
 	OTA::OtaExitCode partition_switch;
-
 	myProxy->SwitchPartition(callSTATUS, partition_switch, &callINFO);
 	std::cout<<"TML : Switch Partition:"<<partition_switch.toString()<<std::endl;
+	// std::cerr << "[ERROR] Switch Partition failed due to " <<  partition_switch.toString() << std::endl;
+	snprintf(buffer, bufferSize, "%s", partition_switch.toString());
 	return 0;
 }
 /*
